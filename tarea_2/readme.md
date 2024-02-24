@@ -34,8 +34,8 @@ python recursividad.py
 
 ## Autor
 
-Jason Javier Escobar Gomez
-9490-19-1725
-Programación 3
-Sección C
+- Jason Javier Escobar Gomez
+- 9490-19-1725
+- Programación 3
+- Sección C
 
