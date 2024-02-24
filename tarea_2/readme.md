@@ -27,7 +27,8 @@ El archivo `recursividad.py` contiene las siguientes funciones recursivas:
 
 Para utilizar las funciones en este repositorio, corre el comando:
 
-```python recursividad.py
+```
+python recursividad.py
 
 ```
 
