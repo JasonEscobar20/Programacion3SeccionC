@@ -1,4 +1,3 @@
-
 # Instalación y Uso de virtualenv
 
 ## Instalación de virtualenv
@@ -11,7 +10,6 @@
 
 ```
 pip install virtualenv
-
 ```
 
 ## Creación de un entorno virtual
@@ -22,7 +20,6 @@ pip install virtualenv
 
 ```
 virtualenv nombre_de_tu_entorno
-
 ```
 
 Reemplaza `nombre_de_tu_entorno` por el nombre que quieras darle a tu entorno virtual.
@@ -35,16 +32,37 @@ Reemplaza `nombre_de_tu_entorno` por el nombre que quieras darle a tu entorno vi
 
 ```
 nombre_de_tu_entorno\Scripts\activate
-
 ```
 
 - **En macOS y Linux:**
 
 ```
 source nombre_de_tu_entorno/bin/activate
-
 ```
 
 Después de ejecutar este comando, notarás que el nombre de tu entorno virtual aparece en el prefijo de tu línea de comandos, indicando que el entorno virtual está activo.
 
-¡Y eso es todo! Ahora tienes `virtualenv` instalado, un nuevo entorno virtual creado y activado. Puedes instalar paquetes específicos en este entorno virtual sin afectar a tu sistema global. Recuerda desactivar el entorno virtual cuando hayas terminado trabajando en él con el comando `deactivate`.
+Ahora tienes `virtualenv` instalado, un nuevo entorno virtual creado y activado. Puedes instalar paquetes específicos en este entorno virtual sin afectar a tu sistema global. Recuerda desactivar el entorno virtual cuando hayas terminado trabajando en él con el comando `deactivate`.
+
+
+## Instalar paquetes necesarios
+Luego de ya tener instalado tu entorno virtual debes de correr el siguiente comando para poder instalar los paquetes necesarios
+
+```
+pip install -r requirements.txt
+```
+
+# Uso de aplicación
+Luego de haber hecho los pasos anteriores ya puedes correr la aplicación sin ningun problema con el siguiente comando.
+
+```
+python project.py
+```
+
+Con el comando anteriormente mencionado la aplicación comenzará a correr para hacer eso de la misma.
+
+- **Importante**
+
+Debes de correr este comando en la misma ubicación donde se encuentra el archivo project.py
+
+Para cerrar la aplicación puedes solo cerrar la ventana o presionar el botón exit que se muestra en el menú

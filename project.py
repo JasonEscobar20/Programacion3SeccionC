@@ -1,13 +1,14 @@
 import tkinter as tk
 from tkinter import messagebox
 
+import random
 
 class TreeNode:
     def __init__(self, state, value=0.5):
-        self.state = state  # The state of the board
-        self.value = value  # The value associated with this state
-        self.left = None  # Left child node (for one possible move)
-        self.right = None  # Right child node (for another possible move)
+        self.state = state
+        self.value = value
+        self.left = None
+        self.right = None
 
 class BinaryTree:
     def __init__(self):
@@ -54,60 +55,19 @@ class BinaryTree:
             yield from self.in_order_traversal(node.right)
 
 
-class MainMenu:
-    def __init__(self, master):
-        self.master = master
-        self.master.title("Tic Tac Toe Main Menu")
-        self.frame = tk.Frame(self.master, pady=30, padx=100)
-        self.frame.pack()
-
-        self.new_game_button = tk.Button(self.frame, text="New Game", command=self.start_new_game)
-        self.new_game_button.pack(pady=10)
-
-        self.match_history_button = tk.Button(self.frame, text="Match History", command=self.view_match_history)
-        self.match_history_button.pack(pady=10)
-
-        self.learning_stats_button = tk.Button(self.frame, text="Learning Statistics", command=self.show_learning_statistics)
-        self.learning_stats_button.pack(pady=10)
-        
-        self.learning_stats_button = tk.Button(self.frame, text="Group members", command=self.show_group_members)
-        self.learning_stats_button.pack(pady=10)
-
-        self.exit_button = tk.Button(self.frame, text="Exit", command=self.master.quit)
-        self.exit_button.pack(pady=10)
-
-    def start_new_game(self):
-        self.new_window = tk.Toplevel(self.master)
-        self.app = LearningTicTacToe(self.new_window)
-
-    def view_match_history(self):
-        if hasattr(self, 'app'):
-            history = "\n".join(self.app.match_history)
-            messagebox.showinfo("Match History", history if history else "No matches played yet.")
-        else:
-            messagebox.showinfo("Match History", "No matches played yet.")
-
-    def show_learning_statistics(self):
-        if hasattr(self, 'app'):
-            stats = "\n".join([f"State: {node.state}, Value: {node.value}" for node in self.app.tree])
-            messagebox.showinfo("Learning Statistics", stats if stats else "No learning data available.")
-        else:
-            messagebox.showinfo("Learning Statistics", "No learning data available.")
-            
-    def show_group_members(self):
-        messagebox.showinfo("Group Members", "Name: Jason Javier Escobar Gomez\nCarnet: 9490-19-1725\nSeccion: C")
-
-
-
 class LearningTicTacToe:
     def __init__(self, master):
         self.master = master
-        self.master.title("Tic Tac Toe with Binary Tree Learning")
+        self.master.title("Tic Tac Toe con Aprendizaje")
         self.board = [['' for _ in range(3)] for _ in range(3)]
         self.current_player = 'X'
         self.buttons = [[None for _ in range(3)] for _ in range(3)]
         self.create_widgets()
         self.tree = BinaryTree()
+        self.state_history = []  # Track states visited during a game
+        self.epsilon = 0.2  # Probability for exploration
+        self.alpha = 0.5  # Learning rate
+        self.gamma = 0.9  # Discount factor
         self.initialize_tree()
         self.match_history = []  # Track match history
 
@@ -123,6 +83,7 @@ class LearningTicTacToe:
         if self.board[row][col] == '' and not self.check_winner():
             self.board[row][col] = self.current_player
             self.buttons[row][col].config(text=self.current_player)
+            self.state_history.append(self.get_state())
             if self.check_winner():
                 self.update_state_values(1)  # Win for current player
                 self.match_history.append(f"Player {self.current_player} wins!")
@@ -136,28 +97,31 @@ class LearningTicTacToe:
             else:
                 self.current_player = 'O' if self.current_player == 'X' else 'X'
                 self.ai_move()
-                
-        print('hola')
-                
-        
 
     def ai_move(self):
         best_move = None
-        best_value = -1
-        for row in range(3):
-            for col in range(3):
-                if self.board[row][col] == '':
-                    self.board[row][col] = self.current_player
-                    state_value = self.get_state_value()
-                    self.board[row][col] = ''
-                    if state_value > best_value:
-                        best_value = state_value
-                        best_move = (row, col)
+        if random.random() < self.epsilon:
+            # Exploration: choose a random move
+            empty_cells = [(row, col) for row in range(3) for col in range(3) if self.board[row][col] == '']
+            best_move = random.choice(empty_cells)
+        else:
+            # Exploitation: choose the best known move
+            best_value = -float('inf')
+            for row in range(3):
+                for col in range(3):
+                    if self.board[row][col] == '':
+                        self.board[row][col] = self.current_player
+                        state_value = self.get_state_value()
+                        self.board[row][col] = ''
+                        if state_value > best_value:
+                            best_value = state_value
+                            best_move = (row, col)
 
         if best_move:
             row, col = best_move
             self.board[row][col] = self.current_player
             self.buttons[row][col].config(text=self.current_player)
+            self.state_history.append(self.get_state())
             if self.check_winner():
                 self.update_state_values(-1)  # Loss for human player
                 self.match_history.append(f"Player {self.current_player} wins!")
@@ -183,11 +147,13 @@ class LearningTicTacToe:
         return ''.join([''.join(row) for row in self.board])
 
     def update_state_values(self, result):
-        state = self.get_state()
-        # self.tree.fin
-        node = self.tree.find(state)
-        if node:
-            node.value = result
+        # Traverse the state history in reverse to propagate values
+        next_value = result
+        for state in reversed(self.state_history):
+            node = self.tree.find(state)
+            if node:
+                node.value += self.alpha * (self.gamma * next_value - node.value)
+                next_value = node.value
 
     def check_winner(self):
         for row in self.board:
@@ -212,6 +178,7 @@ class LearningTicTacToe:
     def reset_game(self):
         self.board = [['' for _ in range(3)] for _ in range(3)]
         self.current_player = 'X'
+        self.state_history = []
         for row in range(3):
             for col in range(3):
                 self.buttons[row][col].config(text='')
@@ -220,9 +187,47 @@ class LearningTicTacToe:
         # Initial population of the tree can be done here if necessary
         pass
 
+class MainMenu:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Main Menu")
+        self.frame = tk.Frame(self.master, pady=30, padx=100)
+        self.frame.pack()
+        
+        self.new_game_button = tk.Button(self.frame, text="New Game", command=self.new_game)
+        self.new_game_button.pack(pady=10)
+        
+        self.match_history_button = tk.Button(self.frame, text="Match History", command=self.show_match_history)
+        self.match_history_button.pack(pady=10)
+        
+        self.learning_stats_button = tk.Button(self.frame, text="Learning Statistics", command=self.show_learning_statistics)
+        self.learning_stats_button.pack(pady=10)
+        
+        self.group_members = tk.Button(self.frame, text="Group members", command=self.show_group_members)
+        self.group_members.pack(pady=10)
+
+    def new_game(self):
+        game_window = tk.Toplevel(self.master)
+        self.app = LearningTicTacToe(game_window)
+
+    def show_match_history(self):
+        history_window = tk.Toplevel(self.master)
+        history_text = tk.Text(history_window)
+        history_text.pack()
+        history_text.insert(tk.END, "\n".join(self.app.match_history))
+
+    def show_learning_statistics(self):
+        stats_window = tk.Toplevel(self.master)
+        stats_text = tk.Text(stats_window)
+        stats_text.pack()
+        stats = "\n".join([f"State: {node.state}, Value: {node.value}" for node in self.app.tree])
+        stats_text.insert(tk.END, stats)
+    
+    def show_group_members(self):
+        messagebox.showinfo("Group Members", "Name: Jason Javier Escobar Gomez\nCarnet: 9490-19-1725\nSeccion: C")
+
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.minsize(150, 150)
     main_menu = MainMenu(root)
     root.mainloop()
